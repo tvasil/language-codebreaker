@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+
+# Local reference copy. Link to the official IOL-hosted PDF instead of
+# redistributing it from this repository.
+samples-revision2026.en.pdf
