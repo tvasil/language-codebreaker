@@ -6,9 +6,17 @@ Last reviewed: 14 October 2026
 
 | Content | Credited parties | Public source | Material covered | Request/status | Evidence and conditions |
 |---|---|---|---|---|---|
-| Georgian Countries | Bruno L’Astorina; Brazilian Linguistics Olympiad (OBL); IOL as sample compiler/publisher | [IOL Sample Problems](https://ioling.org/booklets/samples.en.pdf) | Dataset and wording; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Pending — request being prepared for IOL and OBL | Add request date, recipient, message reference, response, required attribution, permitted uses, expiry, and revocation terms |
-| A Donkey in Every House | Todor Tchervenkov; NACLO; IOL as sample compiler/publisher | [NACLO problem](https://naclo.org/resources/problems/2007/N2007-C.pdf) and [solution](https://naclo.org/resources/problems/2007/N2007-CS.pdf) | Dataset and wording; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Pending — request being prepared for IOL and NACLO | Add request date, recipient, message reference, response, required attribution, permitted uses, expiry, and revocation terms |
-| Tenji Karaoke | Patrick Littell; NACLO; IOL as sample compiler/publisher | [NACLO problem](https://naclo.org/resources/problems/2009/N2009-A.pdf) | Dataset and wording; tenji patterns; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Pending — request being prepared for IOL and NACLO | Add request date, recipient, message reference, response, required attribution, permitted uses, expiry, and revocation terms |
+| Georgian Countries | Bruno L’Astorina; Brazilian Linguistics Olympiad (OBL); IOL as sample compiler/publisher | [IOL Sample Problems](https://ioling.org/booklets/samples.en.pdf) | Dataset and wording; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Requests sent to IOL and OBL on 14 October 2026 — responses pending | Record each response, required attribution, permitted uses, expiry, and revocation terms |
+| A Donkey in Every House | Todor Tchervenkov; NACLO; IOL as sample compiler/publisher | [NACLO problem](https://naclo.org/resources/problems/2007/N2007-C.pdf) and [solution](https://naclo.org/resources/problems/2007/N2007-CS.pdf) | Dataset and wording; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Requests sent to IOL and NACLO on 14 October 2026 — responses pending | Record each response, required attribution, permitted uses, expiry, and revocation terms |
+| Tenji Karaoke | Patrick Littell; NACLO; IOL as sample compiler/publisher | [NACLO problem](https://naclo.org/resources/problems/2009/N2009-A.pdf) | Dataset and wording; tenji patterns; interactive adaptation; hints, answer checking, explanation; public web and source-code distribution | Requests sent to IOL and NACLO on 14 October 2026 — responses pending | Record each response, required attribution, permitted uses, expiry, and revocation terms |
+
+## Correspondence log
+
+| Organisation | Date | Contact route | Scope | Status |
+|---|---|---|---|---|
+| International Linguistics Olympiad (IOL) | 14 October 2026 | Official contact form | All three adaptations and the IOL sample compilation | Sent — response pending |
+| Brazilian Linguistics Olympiad (OBL) | 14 October 2026 | `organiza@obling.org` | *Georgian Countries* | Sent — response pending |
+| North American Computational Linguistics Open Competition (NACLO) | 14 October 2026 | `nacloinquiries@googlegroups.com` | *A Donkey in Every House* and *Tenji Karaoke* | Sent — response pending |
 
 ## Rights requested
 
