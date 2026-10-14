@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { GreekMatchBoard } from "./components/GreekMatchBoard";
+import { HintControl } from "./components/HintControl";
 import {
   brailleDecode,
   brailleMatchAnswers,
@@ -11,6 +13,7 @@ import {
   type Dots,
 } from "./content/puzzles";
 import {
+  comparePhrases,
   evaluateMapping,
   evaluateTextAnswers,
   sameDots,
@@ -33,47 +36,42 @@ const feedbackCopy: Record<CheckState, string> = {
   correct: "Case solved. Your deductions fit every piece of evidence.",
 };
 
-function Feedback({ state }: { state: CheckState }) {
+function Feedback({ state, correctText, incorrectText }: {
+  state: CheckState;
+  correctText?: string;
+  incorrectText?: string;
+}) {
+  const copy = state === "correct" && correctText
+    ? correctText
+    : state === "incorrect" && incorrectText
+      ? incorrectText
+      : feedbackCopy[state];
   return (
     <p className={`feedback feedback--${state}`} role="status" aria-live="polite">
-      {feedbackCopy[state]}
+      {copy}
     </p>
   );
 }
 
-function HintControl({ hints }: { hints: readonly string[] }) {
-  const [shown, setShown] = useState(0);
+function ScratchSpace({ value, onChange, textareaRef, detailsRef, id }: {
+  value: string;
+  onChange: (value: string) => void;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
+  detailsRef?: React.RefObject<HTMLDetailsElement | null>;
+  id: string;
+}) {
   return (
-    <section className="hint-panel" aria-labelledby="hint-title">
-      <div className="hint-heading">
-        <div>
-          <p className="kicker" id="hint-title">Field notes</p>
-          <p className="hint-count">{shown} of {hints.length} observations revealed</p>
-        </div>
-        <button
-          className="button button--quiet"
-          type="button"
-          onClick={() => setShown((count) => Math.min(count + 1, hints.length))}
-          disabled={shown === hints.length}
-        >
-          {shown ? "Another nudge" : "Need a nudge?"}
-        </button>
-      </div>
-      {shown > 0 && (
-        <ol className="hint-list">
-          {hints.slice(0, shown).map((hint) => <li key={hint}>{hint}</li>)}
-        </ol>
-      )}
-    </section>
-  );
-}
-
-function ScratchSpace() {
-  return (
-    <details className="scratch">
+    <details className="scratch" ref={detailsRef}>
       <summary>Scratch space <span>Optional notes, never graded</span></summary>
-      <label className="sr-only" htmlFor="scratch-notes">Private scratch notes</label>
-      <textarea id="scratch-notes" rows={5} placeholder="Record a pattern, a possible meaning, or a question…" />
+      <label className="sr-only" htmlFor={id}>Private scratch notes</label>
+      <textarea
+        ref={textareaRef}
+        id={id}
+        rows={5}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder="Record a pattern, a possible meaning, or a question…"
+      />
     </details>
   );
 }
@@ -90,9 +88,40 @@ function Reveal({ children, onNext, final = false }: { children: React.ReactNode
   );
 }
 
-function PuzzleShell({ round, onRoundChange, problem, answer }: {
+function GameInfoPanel({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <aside className="paper info-panel" role="dialog" aria-modal="false" aria-labelledby="game-info-title" id="game-info-panel">
+      <button className="info-panel__close" type="button" onClick={onDismiss} aria-label="Close game introduction">×</button>
+      <p className="eyebrow">A linguistic puzzle game</p>
+      <h2 id="game-info-title">Discover how languages work, one pattern at a time.</h2>
+      <p className="info-panel__lede">
+        <i>Crack the Language</i> is inspired by problems from the International Linguistics Olympiad. They challenge young people to uncover how languages are constructed through logic rather than memorisation, from familiar and lesser-known languages to invented ones.
+      </p>
+      <p className="info-panel__lede">
+        This proof of concept adapts three problems from the IOL’s{" "}
+        <a href="https://ioling.org/booklets/samples.en.pdf">sample problems booklet</a>, adding interactive tools and progressive support to help you build solving intuition.
+      </p>
+      <div className="info-panel__guide">
+        <p className="kicker">How it works · No prior knowledge required</p>
+        <ol className="info-steps">
+          <li><b>Study the evidence.</b> Compare unfamiliar forms with what you already know.</li>
+          <li><b>Mark what repeats.</b> Highlight patterns, move matches, toggle dots, and take notes.</li>
+          <li><b>Test your theory.</b> Check each section and reveal hints only when you want them.</li>
+        </ol>
+      </div>
+      <button className="button button--primary info-panel__cta" type="button" onClick={onDismiss}>
+        Start playing <span aria-hidden="true">→</span>
+      </button>
+    </aside>
+  );
+}
+
+function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, problem, answer }: {
   round: Round;
   onRoundChange: (round: Round) => void;
+  infoOpen: boolean;
+  onInfoOpen: () => void;
+  onInfoClose: () => void;
   problem: React.ReactNode;
   answer: React.ReactNode;
 }) {
@@ -100,7 +129,7 @@ function PuzzleShell({ round, onRoundChange, problem, answer }: {
   return (
     <>
       <header className="topbar">
-        <button className="wordmark" type="button" onClick={() => onRoundChange(0)}>Crack the Language</button>
+        <button className="wordmark" type="button" onClick={() => onRoundChange(0)} aria-label="Open case one">Crack the Language</button>
         <nav aria-label="Case navigation" className="case-nav">
           {rounds.map((item, index) => (
             <button
@@ -115,7 +144,10 @@ function PuzzleShell({ round, onRoundChange, problem, answer }: {
             </button>
           ))}
         </nav>
-        <span className="prototype-tag">Non-commercial prototype</span>
+        <div className="topbar-actions">
+          <button className="about-button" type="button" onClick={onInfoOpen} aria-expanded={infoOpen} aria-controls={infoOpen ? "game-info-panel" : undefined}>About this game</button>
+          <span className="prototype-tag">Non-commercial prototype</span>
+        </div>
       </header>
       <main className="page-shell">
         <header className="case-intro">
@@ -130,6 +162,7 @@ function PuzzleShell({ round, onRoundChange, problem, answer }: {
           <strong>Independent educational prototype:</strong> Not affiliated with or endorsed by IOL, OBL, or NACLO. A puzzle reuse permission request is pending.
         </footer>
       </main>
+      {infoOpen && <GameInfoPanel onDismiss={onInfoClose} />}
     </>
   );
 }
@@ -142,13 +175,53 @@ const georgianRows = [
   ["კოლუმბია", null],
 ] as const;
 
+async function copyText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const fallback = document.createElement("textarea");
+  fallback.value = value;
+  fallback.setAttribute("readonly", "");
+  fallback.style.position = "fixed";
+  fallback.style.opacity = "0";
+  document.body.appendChild(fallback);
+  try {
+    fallback.select();
+    if (!document.execCommand("copy")) throw new Error("Copy command failed");
+  } finally {
+    fallback.remove();
+  }
+}
+
 function useGeorgianRound({ onNext }: { onNext: () => void }) {
   const [active, setActive] = useState<string | null>(null);
   const [answers, setAnswers] = useState(["", ""]);
   const [state, setState] = useState<CheckState>("idle");
+  const [hintsShown, setHintsShown] = useState(0);
+  const [scratch, setScratch] = useState("");
+  const [characterStatus, setCharacterStatus] = useState("");
+  const scratchRef = useRef<HTMLTextAreaElement>(null);
+  const scratchDetailsRef = useRef<HTMLDetailsElement>(null);
 
   function check() {
     setState(evaluateTextAnswers(answers, [["Argentina"], ["Colombia"]], true));
+  }
+
+  function insertInScratch() {
+    if (!active) return;
+    const textarea = scratchRef.current;
+    const start = textarea?.selectionStart ?? scratch.length;
+    const end = textarea?.selectionEnd ?? scratch.length;
+    const next = `${scratch.slice(0, start)}${active}${scratch.slice(end)}`;
+    setScratch(next);
+    setCharacterStatus(`${active} added to scratch notes.`);
+    if (scratchDetailsRef.current) scratchDetailsRef.current.open = true;
+    requestAnimationFrame(() => {
+      textarea?.focus();
+      textarea?.setSelectionRange(start + active.length, start + active.length);
+    });
   }
 
   return {
@@ -180,13 +253,28 @@ function useGeorgianRound({ onNext }: { onNext: () => void }) {
           <span>Choose a Georgian character to mark every match.</span>
           <button className="text-button" type="button" onClick={() => setActive(null)} disabled={!active}>Clear marks</button>
         </div>
+        {active && (
+          <div className="character-actions" role="group" aria-label={`Actions for ${active}`}>
+            <span className="character-actions__glyph" lang="ka">{active}</span>
+            <button className="button button--quiet" type="button" onClick={async () => {
+              try {
+                await copyText(active);
+                setCharacterStatus(`${active} copied.`);
+              } catch {
+                setCharacterStatus("Copy failed. Try inserting the character into your scratch notes.");
+              }
+            }}>Copy character</button>
+            <button className="button button--quiet" type="button" onClick={insertInScratch}>Insert into scratch</button>
+          </div>
+        )}
+        {characterStatus && <p className="character-status" role="status" aria-live="polite">{characterStatus}</p>}
         <HintControl hints={[
           "Begin with Peru and Uruguay: their lengths give you a useful foothold.",
           "Uruguay repeats the u sound. Which Georgian character appears in the matching positions?",
           "The repeated უ shows that the words run from left to right.",
           "Transfer the letters you now know into the two unknown rows and look for country-name shapes.",
-        ]} />
-        <ScratchSpace />
+        ]} shown={hintsShown} onReveal={() => setHintsShown((count) => Math.min(count + 1, 4))} idPrefix="georgian" />
+        <ScratchSpace id="georgian-scratch" value={scratch} onChange={setScratch} textareaRef={scratchRef} detailsRef={scratchDetailsRef} />
         <p className="attribution">
           Adapted from <cite>Georgian Countries</cite> by Bruno L’Astorina, Brazilian Linguistics Olympiad 2016; republished in IOL Sample Problems. © respective rights holders. Non-commercial educational prototype; permission request pending.{" "}
           <a href="https://ioling.org/booklets/samples.en.pdf">Official source</a>.
@@ -223,85 +311,117 @@ function useGeorgianRound({ onNext }: { onNext: () => void }) {
 }
 
 function useGreekRound({ onNext }: { onNext: () => void }) {
-  const [selected, setSelected] = useState<string | null>(null);
   const [pairs, setPairs] = useState<Record<string, string>>({});
   const [answers, setAnswers] = useState(["", ""]);
-  const [state, setState] = useState<CheckState>("idle");
+  const [pairState, setPairState] = useState<CheckState>("idle");
+  const [constructionState, setConstructionState] = useState<CheckState>("idle");
+  const [fieldStates, setFieldStates] = useState<[CheckState, CheckState]>(["idle", "idle"]);
+  const [attempts, setAttempts] = useState<[number, number]>([0, 0]);
+  const [assisted, setAssisted] = useState<[boolean, boolean]>([false, false]);
+  const [hintsShown, setHintsShown] = useState(0);
+  const [scratch, setScratch] = useState("");
+  const [activeAnswer, setActiveAnswer] = useState(0);
+  const answerRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const expectedAnswers = ["hoi tōn emporōn oicoi", "hoi tu dulu onoi"] as const;
 
-  const pairedTranslationIds = new Set(Object.values(pairs));
-  const translationText = Object.fromEntries(greekTranslations);
-
-  function assign(translationId: string) {
-    if (!selected) return;
+  function assign(phraseId: string, translationId: string) {
     setPairs((current) => {
       const next = Object.fromEntries(Object.entries(current).filter(([, value]) => value !== translationId));
-      next[selected] = translationId;
+      next[phraseId] = translationId;
       return next;
     });
-    setSelected(null);
-    setState("idle");
+    setPairState("idle");
   }
 
-  function check() {
-    const pairState = evaluateMapping(pairs, greekMatchAnswers);
-    const textState = evaluateTextAnswers(
-      answers,
-      [["hoi tōn emporōn oicoi"], ["hoi tu dulu onoi"]],
-      true,
+  function removePair(phraseId: string) {
+    setPairs((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== phraseId)));
+    setPairState("idle");
+  }
+
+  function checkConstruction() {
+    const nextStates = answers.map((answer, index) => (
+      evaluateTextAnswers([answer], [[expectedAnswers[index]]], true)
+    )) as [CheckState, CheckState];
+    setFieldStates(nextStates);
+    setAttempts((current) => current.map((count, index) => (
+      nextStates[index] === "incorrect" ? count + 1 : count
+    )) as [number, number]);
+    setConstructionState(
+      nextStates.some((item) => item === "incomplete")
+        ? "incomplete"
+        : nextStates.every((item) => item === "correct") ? "correct" : "incorrect",
     );
-    setState(pairState === "incomplete" || textState === "incomplete" ? "incomplete" : pairState === "correct" && textState === "correct" ? "correct" : "incorrect");
+  }
+
+  function updateAnswer(index: number, value: string) {
+    setAnswers((current) => current.map((answer, answerIndex) => answerIndex === index ? value : answer));
+    setFieldStates((current) => current.map((item, answerIndex) => answerIndex === index ? "idle" : item) as [CheckState, CheckState]);
+    setConstructionState("idle");
+  }
+
+  function insertCharacter(character: string) {
+    const input = answerRefs.current[activeAnswer];
+    const current = answers[activeAnswer];
+    const start = input?.selectionStart ?? current.length;
+    const end = input?.selectionEnd ?? current.length;
+    updateAnswer(activeAnswer, `${current.slice(0, start)}${character}${current.slice(end)}`);
+    requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(start + character.length, start + character.length);
+    });
+  }
+
+  function completeAnswer(index: number) {
+    const nextAnswers = answers.map((answer, answerIndex) => answerIndex === index ? expectedAnswers[index] : answer);
+    const nextStates = fieldStates.map((item, answerIndex) => answerIndex === index ? "correct" : item) as [CheckState, CheckState];
+    setAnswers(nextAnswers);
+    setFieldStates(nextStates);
+    setAssisted((current) => current.map((item, answerIndex) => answerIndex === index ? true : item) as [boolean, boolean]);
+    setConstructionState(nextStates.every((item) => item === "correct") ? "correct" : "idle");
+  }
+
+  function fieldMessage(index: number): string {
+    const state = fieldStates[index];
+    if (state === "correct") return assisted[index] ? "Completed with help." : "This phrase is correct.";
+    if (state === "incomplete") return "Enter a phrase before checking.";
+    if (state !== "incorrect") return "";
+
+    const comparison = comparePhrases(answers[index], expectedAnswers[index], true);
+    if (attempts[index] >= 3 && comparison.isVeryClose) {
+      return `You’re one character away. Focus on word ${comparison.firstDifferingWord ?? "that differs"}.`;
+    }
+    if (attempts[index] >= 2 && comparison.firstDifferingWord) {
+      return `Look closely at word ${comparison.firstDifferingWord}.`;
+    }
+    return "Not quite. Compare the articles, owners, and noun endings in the evidence.";
   }
 
   return {
     problem: (
       <>
         <p className="lede">Match the Ancient Greek phrases to their unordered translations. Then use the pattern to construct two new phrases.</p>
-        <div className="matching-grid" aria-label="Phrase matching activity">
-          <section>
-            <h3>Ancient Greek</h3>
-            <div className="match-list">
-              {greekPhrases.map(([id, phrase]) => (
-                <button
-                  type="button"
-                  className={`match-item ${selected === id ? "is-selected" : ""} ${pairs[id] ? "is-paired" : ""}`}
-                  key={id}
-                  aria-pressed={selected === id}
-                  onClick={() => setSelected(selected === id ? null : id)}
-                >
-                  <span className="match-id">{id}</span>
-                  <span lang="grc-Latn">{phrase}</span>
-                  {pairs[id] && <small>Paired with {pairs[id]} · {translationText[pairs[id]]}</small>}
-                </button>
-              ))}
-            </div>
-          </section>
-          <section>
-            <h3>English</h3>
-            <div className="match-list">
-              {greekTranslations.map(([id, translation]) => (
-                <button
-                  type="button"
-                  className={`match-item ${pairedTranslationIds.has(id) ? "is-paired" : ""}`}
-                  key={id}
-                  disabled={!selected}
-                  onClick={() => assign(id)}
-                >
-                  <span className="match-id">{id}</span>
-                  <span>{translation}</span>
-                </button>
-              ))}
-            </div>
-          </section>
+        <GreekMatchBoard
+          phrases={greekPhrases}
+          translations={greekTranslations}
+          pairs={pairs}
+          onAssign={assign}
+          onRemove={removePair}
+        />
+        <div className="section-check">
+          <p className="progress-line"><b>{Object.keys(pairs).length} of 8</b> tentative pairs made</p>
+          <button className="button button--primary" type="button" onClick={() => setPairState(evaluateMapping(pairs, greekMatchAnswers))}>
+            Check matching <span aria-hidden="true">→</span>
+          </button>
         </div>
-        <p className="interaction-note">Select a Greek phrase, then its English partner. Reassigning either item replaces the tentative pair.</p>
+        <Feedback state={pairState} correctText="Matching complete. Every phrase has its partner." />
         <HintControl hints={[
           "Find the four phrases containing a word beginning cyr-. Four English choices contain master or masters.",
           "Compare ho with hoi, and singular English nouns with plural ones.",
           "The forms tu and tōn introduce singular and plural possessors.",
           "The owner comes between the first article and the owned noun.",
           "To build a new phrase, choose the plural article, the possessor form, then the plural owned noun.",
-        ]} />
-        <ScratchSpace />
+        ]} shown={hintsShown} onReveal={() => setHintsShown((count) => Math.min(count + 1, 5))} idPrefix="greek" />
+        <ScratchSpace id="greek-scratch" value={scratch} onChange={setScratch} />
         <p className="attribution">
           Adapted from <cite>A Donkey in Every House</cite> by Todor Tchervenkov, NACLO 2007; republished in IOL Sample Problems. © respective rights holders. Non-commercial educational prototype; permission request pending.{" "}
           <a href="https://naclo.org/resources/problems/2007/N2007-C.pdf">Official source</a>.
@@ -311,21 +431,32 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
     answer: (
       <>
         <h2>Your construction</h2>
-        <p className="progress-line"><b>{Object.keys(pairs).length} of 8</b> tentative pairs made</p>
         <div className="answer-fields compact">
-          <label>
-            <span className="answer-prompt">The houses of the merchants</span>
-            <input value={answers[0]} onChange={(event) => { setAnswers([event.target.value, answers[1]]); setState("idle"); }} placeholder="Ancient Greek transcription" spellCheck={false} />
-          </label>
-          <label>
-            <span className="answer-prompt">The donkeys of the slave</span>
-            <input value={answers[1]} onChange={(event) => { setAnswers([answers[0], event.target.value]); setState("idle"); }} placeholder="Ancient Greek transcription" spellCheck={false} />
-          </label>
+          <div className={fieldStates[0] === "correct" ? "answer-field is-correct" : "answer-field"}>
+            <label className="answer-prompt" htmlFor="greek-answer-0">The houses of the merchants</label>
+            <input id="greek-answer-0" ref={(node) => { answerRefs.current[0] = node; }} value={answers[0]} onFocus={() => setActiveAnswer(0)} onChange={(event) => updateAnswer(0, event.target.value)} placeholder="Ancient Greek transcription" spellCheck={false} aria-describedby="greek-answer-0-feedback" aria-invalid={fieldStates[0] === "incorrect"} />
+            <span id="greek-answer-0-feedback" className={`field-feedback feedback--${fieldStates[0]}`} role="status">{fieldMessage(0)}</span>
+            {attempts[0] >= 3 && hintsShown === 5 && fieldStates[0] === "incorrect" && (
+              <button className="text-button assist-action" type="button" onClick={() => completeAnswer(0)}>Complete this answer for me</button>
+            )}
+          </div>
+          <div className={fieldStates[1] === "correct" ? "answer-field is-correct" : "answer-field"}>
+            <label className="answer-prompt" htmlFor="greek-answer-1">The donkeys of the slave</label>
+            <input id="greek-answer-1" ref={(node) => { answerRefs.current[1] = node; }} value={answers[1]} onFocus={() => setActiveAnswer(1)} onChange={(event) => updateAnswer(1, event.target.value)} placeholder="Ancient Greek transcription" spellCheck={false} aria-describedby="greek-answer-1-feedback" aria-invalid={fieldStates[1] === "incorrect"} />
+            <span id="greek-answer-1-feedback" className={`field-feedback feedback--${fieldStates[1]}`} role="status">{fieldMessage(1)}</span>
+            {attempts[1] >= 3 && hintsShown === 5 && fieldStates[1] === "incorrect" && (
+              <button className="text-button assist-action" type="button" onClick={() => completeAnswer(1)}>Complete this answer for me</button>
+            )}
+          </div>
         </div>
-        <p className="form-note">Use <b>ō</b> for long o. Macrons are normalized, but not discarded.</p>
-        <button className="button button--primary button--wide" type="button" onClick={check}>Check the full case <span aria-hidden="true">→</span></button>
-        <Feedback state={state} />
-        {state === "correct" && (
+        <div className="character-tray" aria-label="Special character keyboard">
+          <span>Insert special character:</span>
+          <button type="button" onClick={() => insertCharacter("ō")} aria-label="Insert ō">ō</button>
+        </div>
+        <p className="form-note">Select an input, then use the character button for long <b>ō</b>. Macrons are normalized, but not discarded.</p>
+        <button className="button button--primary button--wide" type="button" onClick={checkConstruction}>Check construction <span aria-hidden="true">→</span></button>
+        <Feedback state={constructionState} correctText="Construction complete. Both new phrases follow the pattern." />
+        {pairState === "correct" && constructionState === "correct" && (
           <Reveal onNext={onNext}>
             <p><b>ho / hoi</b> mark singular and plural owned nouns; <b>tu / tōn</b> introduce singular and plural owners. The order is article + owner + owned noun.</p>
             <p className="key-line"><span>houses of merchants</span><b>hoi tōn emporōn oicoi</b></p>
@@ -377,22 +508,26 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
     samurai: Array.from({ length: 4 }, () => [...blank] as Dots),
     miso: Array.from({ length: 2 }, () => [...blank] as Dots),
   });
-  const [state, setState] = useState<CheckState>("idle");
+  const [matchState, setMatchState] = useState<CheckState>("idle");
+  const [decodeState, setDecodeState] = useState<CheckState>("idle");
+  const [writeState, setWriteState] = useState<CheckState>("idle");
+  const [hintsShown, setHintsShown] = useState(0);
+  const [scratch, setScratch] = useState("");
 
   const choices = useMemo(() => ["atari", "haiku", "katana", "kimono", "koi", "sake"], []);
 
-  function check() {
-    const mapping = evaluateMapping(matches, brailleMatchAnswers);
-    const text = evaluateTextAnswers(decoded, [["karate"], ["anime"]], true);
+  function checkWritten() {
     const hasBlankCell = Object.values(written).flat().some((cell) => cell.every((dot) => !dot));
     const dotsCorrect = brailleWrite.every((word) => word.cells.every((expected, index) => sameDots(written[word.id][index], expected)));
-    setState(mapping === "incomplete" || text === "incomplete" || hasBlankCell ? "incomplete" : mapping === "correct" && text === "correct" && dotsCorrect ? "correct" : "incorrect");
+    setWriteState(hasBlankCell ? "incomplete" : dotsCorrect ? "correct" : "incorrect");
   }
 
   function updateCell(wordId: string, index: number, pattern: Dots) {
     setWritten((current) => ({ ...current, [wordId]: current[wordId].map((cell, cellIndex) => cellIndex === index ? pattern : cell) }));
-    setState("idle");
+    setWriteState("idle");
   }
+
+  const caseComplete = matchState === "correct" && decodeState === "correct" && writeState === "correct";
 
   return {
     problem: (
@@ -415,22 +550,32 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
               <label className="sequence-card" key={sequence.id}>
                 <span className="sequence-id">{sequence.id}</span>
                 <TenjiWord cells={sequence.cells} label={`Sequence ${sequence.id}`} />
-                <select value={matches[sequence.id] ?? ""} onChange={(event) => { setMatches({ ...matches, [sequence.id]: event.target.value }); setState("idle"); }} aria-label={`Match sequence ${sequence.id}`}>
+                <select value={matches[sequence.id] ?? ""} onChange={(event) => { setMatches({ ...matches, [sequence.id]: event.target.value }); setMatchState("idle"); }} aria-label={`Match sequence ${sequence.id}`}>
                   <option value="">Choose word</option>
                   {choices.map((choice) => <option key={choice} value={choice}>{choice}</option>)}
                 </select>
               </label>
             ))}
           </div>
+          <button className="button button--primary section-button" type="button" onClick={() => setMatchState(evaluateMapping(matches, brailleMatchAnswers))}>
+            Check identifications <span aria-hidden="true">→</span>
+          </button>
+          <Feedback state={matchState} correctText="Part one complete. All six sequences are identified." />
         </section>
         <HintControl hints={[
           "Compare koi with kimono: the shared first syllable keeps the same consonant component.",
           "Compare the a syllables in atari, katana, and karaoke.",
-          "The upper-left triangle of dots 1, 2, and 4 encodes the vowel; lower and right-side additions encode the consonant row.",
+          "The triangular region shown below encodes the vowel; lower and right-side additions encode the consonant row.",
           "Mentally overlay ka and a. The extra lower-right dot is the k component.",
           "Build a syllable by combining its vowel pattern with its consonant-row pattern.",
-        ]} />
-        <ScratchSpace />
+        ]} shown={hintsShown} onReveal={() => setHintsShown((count) => Math.min(count + 1, 5))} idPrefix="tenji" />
+        {hintsShown >= 3 && (
+          <div className="hint-visual" aria-label="The vowel region is the triangle formed by the top-left, middle-left, and top-right positions">
+            <TenjiCell pattern={tenji.e} label="Highlighted triangular vowel region" />
+            <span>The vowel triangle</span>
+          </div>
+        )}
+        <ScratchSpace id="tenji-scratch" value={scratch} onChange={setScratch} />
         <p className="attribution">
           Adapted from <cite>Tenji Karaoke</cite> by Patrick Littell, NACLO 2009; republished in IOL Sample Problems. © NACLO and the problem author. Non-commercial educational prototype; permission request pending.{" "}
           <a href="https://naclo.org/resources/problems/2009/N2009-A.pdf">Official source</a>.
@@ -446,9 +591,13 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
             <label className="decode-row" key={word.id}>
               <span className="sequence-id">{word.id}</span>
               <TenjiWord cells={word.cells} label={`Sequence ${word.id}`} />
-              <input value={decoded[index]} onChange={(event) => { const next = [...decoded]; next[index] = event.target.value; setDecoded(next); setState("idle"); }} placeholder="Roman letters" spellCheck={false} />
+              <input value={decoded[index]} onChange={(event) => { const next = [...decoded]; next[index] = event.target.value; setDecoded(next); setDecodeState("idle"); }} placeholder="Roman letters" spellCheck={false} />
             </label>
           ))}
+          <button className="button button--primary section-button" type="button" onClick={() => setDecodeState(evaluateTextAnswers(decoded, [["karate"], ["anime"]], true))}>
+            Check decoded words <span aria-hidden="true">→</span>
+          </button>
+          <Feedback state={decodeState} correctText="Part two complete. Both sequences are decoded." />
         </section>
         <section className="write-section" aria-labelledby="write-title">
           <p className="kicker" id="write-title">Part three · Construct</p>
@@ -463,10 +612,12 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
             </fieldset>
           ))}
           <p className="form-note">Toggle each position. Raised dots are larger, filled, and outlined.</p>
+          <button className="button button--primary section-button" type="button" onClick={checkWritten}>
+            Check constructed words <span aria-hidden="true">→</span>
+          </button>
+          <Feedback state={writeState} correctText="Part three complete. Both words use the right dot patterns." />
         </section>
-        <button className="button button--primary button--wide" type="button" onClick={check}>Check the full case <span aria-hidden="true">→</span></button>
-        <Feedback state={state} />
-        {state === "correct" && (
+        {caseComplete && (
           <Reveal onNext={onNext} final>
             <p>The cell is compositional: a vowel pattern forms the base, then a consonant-row pattern is added. For example, <b>ka</b> combines the <b>a</b> pattern with one lower-right <b>k</b> dot.</p>
             <div className="cell-equation"><TenjiCell pattern={tenji.a} label="a" /><span>+</span><span className="component-dot">k</span><span>=</span><TenjiCell pattern={tenji.ka} label="ka" /></div>
@@ -478,11 +629,22 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
 }
 
 export function App() {
+  const [infoOpen, setInfoOpen] = useState(true);
   const [round, setRound] = useState<Round>(0);
   const georgian = useGeorgianRound({ onNext: () => setRound(1) });
   const greek = useGreekRound({ onNext: () => setRound(2) });
   const braille = useBrailleRound({ onNext: () => setRound(0) });
   const content = [georgian, greek, braille][round];
 
-  return <PuzzleShell round={round} onRoundChange={setRound} problem={content.problem} answer={content.answer} />;
+  return (
+    <PuzzleShell
+      round={round}
+      onRoundChange={setRound}
+      infoOpen={infoOpen}
+      onInfoOpen={() => setInfoOpen(true)}
+      onInfoClose={() => setInfoOpen(false)}
+      problem={content.problem}
+      answer={content.answer}
+    />
+  );
 }
