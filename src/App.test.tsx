@@ -13,6 +13,21 @@ async function renderGame(user: ReturnType<typeof userEvent.setup>) {
   return rendered;
 }
 
+async function moveGreekTranslation(user: ReturnType<typeof userEvent.setup>, translation: string, row: string) {
+  await user.click(screen.getByRole("button", { name: `Move translation ${translation}` }));
+  await user.click(screen.getByRole("button", { name: `Move translation ${translation} to row ${row}` }));
+}
+
+async function unlockGreekConstruction(user: ReturnType<typeof userEvent.setup>) {
+  await moveGreekTranslation(user, "E", "1");
+  await moveGreekTranslation(user, "F", "2");
+  await moveGreekTranslation(user, "B", "3");
+  await moveGreekTranslation(user, "C", "4");
+  await moveGreekTranslation(user, "H", "6");
+  await user.click(screen.getByRole("button", { name: "Check matching" }));
+  await user.click(screen.getByRole("button", { name: /Continue to construction/ }));
+}
+
 describe("prototype interactions", () => {
   it("shows a dismissible and refindable game introduction over case one", async () => {
     const user = userEvent.setup();
@@ -33,7 +48,7 @@ describe("prototype interactions", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("supports marking, pairing, and dot editing with native controls", async () => {
+  it("supports character marking and compact Greek tile movement", async () => {
     const user = userEvent.setup();
     await renderGame(user);
 
@@ -43,15 +58,9 @@ describe("prototype interactions", () => {
     matchingU.forEach((button) => expect(button.getAttribute("aria-pressed")).toBe("true"));
 
     await user.click(screen.getByRole("button", { name: /Open case 2/ }));
-    await user.click(screen.getByRole("button", { name: /E.*the slave of the sons/ }));
-    await user.click(screen.getByRole("button", { name: "Assign translation E to phrase 1" }));
-    expect(screen.getByRole("button", { name: /Phrase 1 is paired with translation E/ })).toBeTruthy();
-
-    await user.click(screen.getByRole("button", { name: /Open case 3/ }));
-    const firstSamuraiCell = screen.getByRole("group", { name: "samurai, cell 1" });
-    const firstDot = within(firstSamuraiCell).getByRole("button", { name: "Dot 1, empty" });
-    await user.click(firstDot);
-    expect(within(firstSamuraiCell).getByRole("button", { name: "Dot 1, raised" }).getAttribute("aria-pressed")).toBe("true");
+    await moveGreekTranslation(user, "E", "1");
+    const movedTile = screen.getByRole("button", { name: "Move translation E" }).closest("li");
+    expect(movedTile?.textContent).toContain("ho tōn hyiōn dulos");
   });
 
   it("keeps revealed hints isolated between cases", async () => {
@@ -83,25 +92,34 @@ describe("prototype interactions", () => {
     expect(screen.getByText("უ added to scratch notes.")).toBeTruthy();
   });
 
+  it("turns validation into a completion marker and distinguishes case navigation", async () => {
+    const user = userEvent.setup();
+    await renderGame(user);
+
+    const countryInputs = screen.getAllByPlaceholderText("Country name in English");
+    await user.type(countryInputs[0], "Argentina");
+    await user.type(countryInputs[1], "Colombia");
+    await user.click(screen.getByRole("button", { name: "Check answers" }));
+
+    expect(screen.getByText("Case solved")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Check answers" })).toBeNull();
+    expect(screen.getByRole("button", { name: /Continue to case 2/ }).className).toContain("button--next");
+    expect(screen.getByRole("button", { name: /^Open case 1:/ }).textContent).toBe("✓");
+  });
+
   it("offers keyboard highlighting and keeps translation assignments unique", async () => {
     const user = userEvent.setup();
     const { container } = await renderGame(user);
 
     await user.click(screen.getByRole("button", { name: /Open case 2/ }));
-    await user.type(screen.getByRole("textbox", { name: "Highlight a fragment across the evidence" }), "cyr");
+    await user.type(screen.getByRole("textbox", { name: "Highlight a fragment" }), "cyr");
     await user.click(screen.getByRole("button", { name: "Highlight" }));
     expect(container.querySelectorAll("mark")).toHaveLength(4);
 
-    const translationE = screen.getByRole("button", { name: /E.*the slave of the sons/ });
-    await user.click(translationE);
-    await user.click(screen.getByRole("button", { name: "Assign translation E to phrase 1" }));
-    await user.click(translationE);
-    await user.click(screen.getByRole("button", { name: "Assign translation E to phrase 2" }));
-
-    expect(screen.getByRole("button", { name: /Phrase 1 is unpaired/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Phrase 2 is paired with translation E/ })).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Remove translation E from phrase 2" }));
-    expect(screen.getByRole("button", { name: /Phrase 2 is unpaired/ })).toBeTruthy();
+    await moveGreekTranslation(user, "E", "1");
+    await moveGreekTranslation(user, "E", "2");
+    expect(screen.getAllByRole("button", { name: "Move translation E" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Move translation E" }).closest("li")?.textContent).toContain("hoi tōn dulōn cyrioi");
   });
 
   it("checks the three Tenji sections independently", async () => {
@@ -110,8 +128,8 @@ describe("prototype interactions", () => {
 
     await user.click(screen.getByRole("button", { name: /Open case 3/ }));
     expect(screen.getByRole("button", { name: /Check identifications/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Check decoded words/ })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Check constructed words/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Check decoded words/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Check constructed words/ })).toBeNull();
 
     const matches = {
       a: "haiku",
@@ -126,10 +144,12 @@ describe("prototype interactions", () => {
     }
     await user.click(screen.getByRole("button", { name: /Check identifications/ }));
 
-    expect(screen.getByText("Part one complete. All six sequences are identified.")).toBeTruthy();
-    expect(screen.queryByText("Part two complete. Both sequences are decoded.")).toBeNull();
-    expect(screen.queryByText("Part three complete. Both words use the right dot patterns.")).toBeNull();
+    expect(screen.getByText("All six words are identified")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Continue to decoding/ })).toBeTruthy();
     expect(screen.queryByText("The decisive pattern")).toBeNull();
+    await user.click(screen.getByRole("button", { name: /Continue to decoding/ }));
+    expect(screen.getByRole("button", { name: /Check decoded words/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Check constructed words/ })).toBeNull();
   });
 
   it("inserts a Greek special character into the active construction input", async () => {
@@ -137,6 +157,7 @@ describe("prototype interactions", () => {
     await renderGame(user);
 
     await user.click(screen.getByRole("button", { name: /Open case 2/ }));
+    await unlockGreekConstruction(user);
     const housesInput = screen.getByRole("textbox", { name: "The houses of the merchants" }) as HTMLInputElement;
     const donkeysInput = screen.getByRole("textbox", { name: "The donkeys of the slave" }) as HTMLInputElement;
 
@@ -152,6 +173,7 @@ describe("prototype interactions", () => {
     await renderGame(user);
 
     await user.click(screen.getByRole("button", { name: /Open case 2/ }));
+    await unlockGreekConstruction(user);
     const housesInput = screen.getByRole("textbox", { name: "The houses of the merchants" });
     await user.type(housesInput, "wrong answer");
 
@@ -177,6 +199,7 @@ describe("prototype interactions", () => {
     await renderGame(user);
 
     await user.click(screen.getByRole("button", { name: /Open case 2/ }));
+    await unlockGreekConstruction(user);
     const housesInput = screen.getByRole("textbox", { name: "The houses of the merchants" });
     await user.type(housesInput, "hoi tōn emporōn oico");
 

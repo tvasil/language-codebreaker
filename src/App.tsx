@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { GreekMatchBoard } from "./components/GreekMatchBoard";
 import { HintControl } from "./components/HintControl";
+import { CheckAction, TaskStepper, type TaskStep } from "./components/TaskFlow";
 import {
   brailleDecode,
   brailleMatchAnswers,
@@ -29,30 +30,6 @@ const rounds = [
   { eyebrow: "Writing systems · Easy", title: "Tenji Karaoke" },
 ] as const;
 
-const feedbackCopy: Record<CheckState, string> = {
-  idle: "",
-  incomplete: "There are still a few blanks to complete.",
-  incorrect: "Not quite. Compare the repeated forms, or reveal another hint.",
-  correct: "Case solved. Your deductions fit every piece of evidence.",
-};
-
-function Feedback({ state, correctText, incorrectText }: {
-  state: CheckState;
-  correctText?: string;
-  incorrectText?: string;
-}) {
-  const copy = state === "correct" && correctText
-    ? correctText
-    : state === "incorrect" && incorrectText
-      ? incorrectText
-      : feedbackCopy[state];
-  return (
-    <p className={`feedback feedback--${state}`} role="status" aria-live="polite">
-      {copy}
-    </p>
-  );
-}
-
 function ScratchSpace({ value, onChange, textareaRef, detailsRef, id }: {
   value: string;
   onChange: (value: string) => void;
@@ -76,13 +53,13 @@ function ScratchSpace({ value, onChange, textareaRef, detailsRef, id }: {
   );
 }
 
-function Reveal({ children, onNext, final = false }: { children: React.ReactNode; onNext: () => void; final?: boolean }) {
+function Reveal({ children, onNext, nextLabel }: { children: React.ReactNode; onNext: () => void; nextLabel: string }) {
   return (
     <section className="reveal">
       <p className="kicker">The decisive pattern</p>
       {children}
-      <button className="button button--primary" type="button" onClick={onNext}>
-        {final ? "Return to case one" : "Open the next case"} <span aria-hidden="true">→</span>
+      <button className="button button--next" type="button" onClick={onNext}>
+        {nextLabel} <span aria-hidden="true">→</span>
       </button>
     </section>
   );
@@ -116,7 +93,7 @@ function GameInfoPanel({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, problem, answer }: {
+function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, problem, answer, steps, activeStep, completedSteps, onStepChange, completedRounds }: {
   round: Round;
   onRoundChange: (round: Round) => void;
   infoOpen: boolean;
@@ -124,6 +101,11 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
   onInfoClose: () => void;
   problem: React.ReactNode;
   answer: React.ReactNode;
+  steps: readonly TaskStep[];
+  activeStep: number;
+  completedSteps: readonly boolean[];
+  onStepChange: (step: number) => void;
+  completedRounds: readonly boolean[];
 }) {
   const meta = rounds[round];
   return (
@@ -135,12 +117,12 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
             <button
               type="button"
               key={item.title}
-              className={round === index ? "is-current" : ""}
+              className={`${round === index ? "is-current" : ""}${completedRounds[index] ? " is-complete" : ""}`}
               aria-current={round === index ? "step" : undefined}
               onClick={() => onRoundChange(index as Round)}
               aria-label={`Open case ${index + 1}: ${item.title}`}
             >
-              {String(index + 1).padStart(2, "0")}
+              {completedRounds[index] ? "✓" : String(index + 1).padStart(2, "0")}
             </button>
           ))}
         </nav>
@@ -154,6 +136,7 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
           <p className="eyebrow">Case {String(round + 1).padStart(2, "0")} · {meta.eyebrow}</p>
           <h1>{meta.title}</h1>
         </header>
+        <TaskStepper steps={steps} current={activeStep} completed={completedSteps} onSelect={onStepChange} />
         <div className="case-grid">
           <article className="paper problem-card">{problem}</article>
           <aside className="paper answer-card" aria-label="Your deduction">{answer}</aside>
@@ -298,20 +281,27 @@ function useGeorgianRound({ onNext }: { onNext: () => void }) {
             </label>
           ))}
         </div>
-        <button className="button button--primary button--wide" type="button" onClick={check}>Check answers <span aria-hidden="true">→</span></button>
-        <Feedback state={state} />
+        <CheckAction state={state} onCheck={check} checkLabel="Check answers" successLabel="Case solved" />
         {state === "correct" && (
-          <Reveal onNext={onNext}>
+          <Reveal onNext={onNext} nextLabel="Continue to case 2">
             <p><b>Peru</b> and <b>Uruguay</b> establish direction and the repeating <span lang="ka">უ</span> sound. Those correspondences turn <span lang="ka">არგენტინა</span> into <b>Argentina</b> and <span lang="ka">კოლუმბია</span> into <b>Colombia</b>.</p>
           </Reveal>
         )}
       </>
     ),
+    steps: [{ id: "solve", label: "Solve the countries" }],
+    activeStep: 0,
+    completedSteps: [state === "correct"],
+    onStepChange: () => undefined,
+    complete: state === "correct",
   };
 }
 
 function useGreekRound({ onNext }: { onNext: () => void }) {
-  const [pairs, setPairs] = useState<Record<string, string>>({});
+  const [pairs, setPairs] = useState<Record<string, string>>(() => Object.fromEntries(
+    greekPhrases.map(([phraseId], index) => [phraseId, greekTranslations[index][0]]),
+  ));
+  const [activeStep, setActiveStep] = useState(0);
   const [answers, setAnswers] = useState(["", ""]);
   const [pairState, setPairState] = useState<CheckState>("idle");
   const [constructionState, setConstructionState] = useState<CheckState>("idle");
@@ -324,18 +314,17 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
   const answerRefs = useRef<(HTMLInputElement | null)[]>([]);
   const expectedAnswers = ["hoi tōn emporōn oicoi", "hoi tu dulu onoi"] as const;
 
-  function assign(phraseId: string, translationId: string) {
+  function moveTranslation(phraseId: string, translationId: string) {
     setPairs((current) => {
-      const next = Object.fromEntries(Object.entries(current).filter(([, value]) => value !== translationId));
+      const sourcePhrase = Object.entries(current).find(([, value]) => value === translationId)?.[0];
+      const displaced = current[phraseId];
+      const next = { ...current };
       next[phraseId] = translationId;
+      if (sourcePhrase && sourcePhrase !== phraseId) next[sourcePhrase] = displaced;
       return next;
     });
     setPairState("idle");
-  }
-
-  function removePair(phraseId: string) {
-    setPairs((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== phraseId)));
-    setPairState("idle");
+    setActiveStep(0);
   }
 
   function checkConstruction() {
@@ -404,16 +393,8 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
           phrases={greekPhrases}
           translations={greekTranslations}
           pairs={pairs}
-          onAssign={assign}
-          onRemove={removePair}
+          onMove={moveTranslation}
         />
-        <div className="section-check">
-          <p className="progress-line"><b>{Object.keys(pairs).length} of 8</b> tentative pairs made</p>
-          <button className="button button--primary" type="button" onClick={() => setPairState(evaluateMapping(pairs, greekMatchAnswers))}>
-            Check matching <span aria-hidden="true">→</span>
-          </button>
-        </div>
-        <Feedback state={pairState} correctText="Matching complete. Every phrase has its partner." />
         <HintControl hints={[
           "Find the four phrases containing a word beginning cyr-. Four English choices contain master or masters.",
           "Compare ho with hoi, and singular English nouns with plural ones.",
@@ -430,6 +411,26 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
     ),
     answer: (
       <>
+        {activeStep === 0 ? (
+          <>
+            <p className="kicker">Step 1 of 2</p>
+            <h2>Match the phrases</h2>
+            <p className="answer-guidance">Reorder the English tiles until every row expresses the same meaning, then check the whole set.</p>
+            <CheckAction
+              state={pairState}
+              onCheck={() => setPairState(evaluateMapping(pairs, greekMatchAnswers))}
+              checkLabel="Check matching"
+              successLabel="All eight matches are correct"
+            />
+            {pairState === "correct" && (
+              <button className="button button--next button--wide" type="button" onClick={() => setActiveStep(1)}>
+                Continue to construction <span aria-hidden="true">→</span>
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+        <p className="kicker">Step 2 of 2</p>
         <h2>Your construction</h2>
         <div className="answer-fields compact">
           <div className={fieldStates[0] === "correct" ? "answer-field is-correct" : "answer-field"}>
@@ -454,17 +455,26 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
           <button type="button" onClick={() => insertCharacter("ō")} aria-label="Insert ō">ō</button>
         </div>
         <p className="form-note">Select an input, then use the character button for long <b>ō</b>. Macrons are normalized, but not discarded.</p>
-        <button className="button button--primary button--wide" type="button" onClick={checkConstruction}>Check construction <span aria-hidden="true">→</span></button>
-        <Feedback state={constructionState} correctText="Construction complete. Both new phrases follow the pattern." />
+        <CheckAction state={constructionState} onCheck={checkConstruction} checkLabel="Check construction" successLabel="Both constructions are correct" />
         {pairState === "correct" && constructionState === "correct" && (
-          <Reveal onNext={onNext}>
+          <Reveal onNext={onNext} nextLabel="Continue to case 3">
             <p><b>ho / hoi</b> mark singular and plural owned nouns; <b>tu / tōn</b> introduce singular and plural owners. The order is article + owner + owned noun.</p>
             <p className="key-line"><span>houses of merchants</span><b>hoi tōn emporōn oicoi</b></p>
             <p className="key-line"><span>donkeys of slave</span><b>hoi tu dulu onoi</b></p>
           </Reveal>
         )}
+          </>
+        )}
       </>
     ),
+    steps: [
+      { id: "match", label: "Match phrases" },
+      { id: "construct", label: "Construct phrases" },
+    ],
+    activeStep,
+    completedSteps: [pairState === "correct", constructionState === "correct"],
+    onStepChange: setActiveStep,
+    complete: pairState === "correct" && constructionState === "correct",
   };
 }
 
@@ -502,6 +512,7 @@ function TenjiWord({ cells, label }: { cells: readonly Dots[]; label: string }) 
 const blank: Dots = [false, false, false, false, false, false];
 
 function useBrailleRound({ onNext }: { onNext: () => void }) {
+  const [activeStep, setActiveStep] = useState(0);
   const [matches, setMatches] = useState<Record<string, string>>({});
   const [decoded, setDecoded] = useState(["", ""]);
   const [written, setWritten] = useState<Record<string, Dots[]>>({
@@ -540,7 +551,7 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
           </div>
           <TenjiWord cells={[tenji.ka, tenji.ra, tenji.o, tenji.ke]} label="Tenji spelling of karaoke" />
         </section>
-        <section aria-labelledby="identify-title">
+        {activeStep === 0 && <section aria-labelledby="identify-title">
           <div className="section-heading">
             <div><p className="kicker">Part one</p><h3 id="identify-title">Identify the six sequences</h3></div>
             <p>atari · haiku · katana · kimono · koi · sake</p>
@@ -557,11 +568,28 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
               </label>
             ))}
           </div>
-          <button className="button button--primary section-button" type="button" onClick={() => setMatchState(evaluateMapping(matches, brailleMatchAnswers))}>
-            Check identifications <span aria-hidden="true">→</span>
-          </button>
-          <Feedback state={matchState} correctText="Part one complete. All six sequences are identified." />
-        </section>
+        </section>}
+        {activeStep === 1 && (
+          <section className="stage-reference" aria-labelledby="decode-reference-title">
+            <p className="kicker">Step 2</p>
+            <h3 id="decode-reference-title">Decode two new sequences</h3>
+            <p>Use the same vowel and consonant patterns you found in step one.</p>
+            {brailleDecode.map((word) => (
+              <div className="stage-reference__row" key={word.id}>
+                <span className="sequence-id">{word.id}</span>
+                <TenjiWord cells={word.cells} label={`Sequence ${word.id}`} />
+              </div>
+            ))}
+          </section>
+        )}
+        {activeStep === 2 && (
+          <section className="stage-reference" aria-labelledby="write-reference-title">
+            <p className="kicker">Step 3</p>
+            <h3 id="write-reference-title">Construct two words</h3>
+            <p>Build each syllable by combining its vowel pattern with the consonant component.</p>
+            <p className="candidate-words"><b>samurai</b> has four cells, <b>miso</b> has two.</p>
+          </section>
+        )}
         <HintControl hints={[
           "Compare koi with kimono: the shared first syllable keeps the same consonant component.",
           "Compare the a syllables in atari, katana, and karaoke.",
@@ -584,47 +612,63 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
     ),
     answer: (
       <>
-        <h2>Read and write</h2>
-        <section className="decode-section" aria-labelledby="decode-title">
-          <p className="kicker" id="decode-title">Part two · Decode</p>
-          {brailleDecode.map((word, index) => (
-            <label className="decode-row" key={word.id}>
-              <span className="sequence-id">{word.id}</span>
-              <TenjiWord cells={word.cells} label={`Sequence ${word.id}`} />
-              <input value={decoded[index]} onChange={(event) => { const next = [...decoded]; next[index] = event.target.value; setDecoded(next); setDecodeState("idle"); }} placeholder="Roman letters" spellCheck={false} />
-            </label>
-          ))}
-          <button className="button button--primary section-button" type="button" onClick={() => setDecodeState(evaluateTextAnswers(decoded, [["karate"], ["anime"]], true))}>
-            Check decoded words <span aria-hidden="true">→</span>
-          </button>
-          <Feedback state={decodeState} correctText="Part two complete. Both sequences are decoded." />
-        </section>
-        <section className="write-section" aria-labelledby="write-title">
-          <p className="kicker" id="write-title">Part three · Construct</p>
-          {brailleWrite.map((word) => (
-            <fieldset className="editor-row" key={word.id}>
-              <legend>{word.id}</legend>
-              <div className="tenji-word">
-                {written[word.id].map((cell, index) => (
-                  <TenjiCell key={index} pattern={cell} label={`${word.id}, cell ${index + 1}`} editable onChange={(pattern) => updateCell(word.id, index, pattern)} />
-                ))}
-              </div>
-            </fieldset>
-          ))}
-          <p className="form-note">Toggle each position. Raised dots are larger, filled, and outlined.</p>
-          <button className="button button--primary section-button" type="button" onClick={checkWritten}>
-            Check constructed words <span aria-hidden="true">→</span>
-          </button>
-          <Feedback state={writeState} correctText="Part three complete. Both words use the right dot patterns." />
-        </section>
-        {caseComplete && (
-          <Reveal onNext={onNext} final>
+        <p className="kicker">Step {activeStep + 1} of 3</p>
+        {activeStep === 0 && (
+          <section aria-labelledby="identify-answer-title">
+            <h2 id="identify-answer-title">Identify the words</h2>
+            <p className="answer-guidance"><b>{Object.keys(matches).length} of 6</b> sequences have a tentative answer.</p>
+            <CheckAction state={matchState} onCheck={() => setMatchState(evaluateMapping(matches, brailleMatchAnswers))} checkLabel="Check identifications" successLabel="All six words are identified" />
+            {matchState === "correct" && <button className="button button--next button--wide" type="button" onClick={() => setActiveStep(1)}>Continue to decoding <span aria-hidden="true">→</span></button>}
+          </section>
+        )}
+        {activeStep === 1 && (
+          <section aria-labelledby="decode-title">
+            <h2 id="decode-title">Decode the words</h2>
+            {brailleDecode.map((word, index) => (
+              <label className="decode-row" key={word.id}>
+                <span className="sequence-id">{word.id}</span>
+                <TenjiWord cells={word.cells} label={`Sequence ${word.id}`} />
+                <input value={decoded[index]} onChange={(event) => { const next = [...decoded]; next[index] = event.target.value; setDecoded(next); setDecodeState("idle"); }} placeholder="Roman letters" spellCheck={false} aria-label={`Decode sequence ${word.id}`} />
+              </label>
+            ))}
+            <CheckAction state={decodeState} onCheck={() => setDecodeState(evaluateTextAnswers(decoded, [["karate"], ["anime"]], true))} checkLabel="Check decoded words" successLabel="Both words are decoded" />
+            {decodeState === "correct" && <button className="button button--next button--wide" type="button" onClick={() => setActiveStep(2)}>Continue to construction <span aria-hidden="true">→</span></button>}
+          </section>
+        )}
+        {activeStep === 2 && (
+          <section aria-labelledby="write-title">
+            <h2 id="write-title">Construct the words</h2>
+            {brailleWrite.map((word) => (
+              <fieldset className="editor-row" key={word.id}>
+                <legend>{word.id}</legend>
+                <div className="tenji-word">
+                  {written[word.id].map((cell, index) => (
+                    <TenjiCell key={index} pattern={cell} label={`${word.id}, cell ${index + 1}`} editable onChange={(pattern) => updateCell(word.id, index, pattern)} />
+                  ))}
+                </div>
+              </fieldset>
+            ))}
+            <p className="form-note">Toggle each position. Raised dots are larger, filled, and outlined.</p>
+            <CheckAction state={writeState} onCheck={checkWritten} checkLabel="Check constructed words" successLabel="Both dot patterns are correct" />
+          </section>
+        )}
+        {caseComplete && activeStep === 2 && (
+          <Reveal onNext={onNext} nextLabel="Return to case 1">
             <p>The cell is compositional: a vowel pattern forms the base, then a consonant-row pattern is added. For example, <b>ka</b> combines the <b>a</b> pattern with one lower-right <b>k</b> dot.</p>
             <div className="cell-equation"><TenjiCell pattern={tenji.a} label="a" /><span>+</span><span className="component-dot">k</span><span>=</span><TenjiCell pattern={tenji.ka} label="ka" /></div>
           </Reveal>
         )}
       </>
     ),
+    steps: [
+      { id: "identify", label: "Identify" },
+      { id: "decode", label: "Decode" },
+      { id: "construct", label: "Construct" },
+    ],
+    activeStep,
+    completedSteps: [matchState === "correct", decodeState === "correct", writeState === "correct"],
+    onStepChange: setActiveStep,
+    complete: caseComplete,
   };
 }
 
@@ -635,6 +679,7 @@ export function App() {
   const greek = useGreekRound({ onNext: () => setRound(2) });
   const braille = useBrailleRound({ onNext: () => setRound(0) });
   const content = [georgian, greek, braille][round];
+  const completedRounds = [georgian.complete, greek.complete, braille.complete];
 
   return (
     <PuzzleShell
@@ -645,6 +690,11 @@ export function App() {
       onInfoClose={() => setInfoOpen(false)}
       problem={content.problem}
       answer={content.answer}
+      steps={content.steps}
+      activeStep={content.activeStep}
+      completedSteps={content.completedSteps}
+      onStepChange={content.onStepChange}
+      completedRounds={completedRounds}
     />
   );
 }
