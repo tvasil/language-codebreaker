@@ -34,6 +34,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .case-nav button.is-current.is-complete { box-shadow: 0 0 0 3px rgba(39, 103, 93, 0.22); }
 .topbar-actions { display: flex; align-items: center; justify-self: end; gap: 18px; }
 .about-button { border: 0; background: none; padding: 8px 0; color: #326581; font-size: 0.78rem; font-weight: 750; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+.github-link { color: #244b42; font-size: 0.82rem; font-weight: 800; text-decoration: underline; text-underline-offset: 0.22em; white-space: nowrap; }
+.github-link span { margin-left: 2px; text-decoration: none; }
 
 .info-panel { position: fixed; z-index: 20; top: 88px; right: 3vw; width: min(480px, calc(100vw - 32px)); max-height: calc(100vh - 112px); padding: 34px; overflow-y: auto; background: #fffefa; box-shadow: 0 28px 80px rgba(17, 27, 50, 0.24); }
 .info-panel__close { position: absolute; top: 13px; right: 15px; width: 36px; height: 36px; border: 0; border-radius: 50%; background: #f1ede4; color: var(--ink); font-size: 1.5rem; line-height: 1; cursor: pointer; }

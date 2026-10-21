@@ -1,4 +1,4 @@
-# Crack the Language — POC Handoff Plan
+# Language Codebreaker — POC Handoff Plan
 
 This document is the starting point for the next implementation session. It records the decisions already made, the selected visual direction, the proof-of-concept scope, and an executable build sequence.
 
@@ -7,7 +7,7 @@ This document is the starting point for the next implementation session. It reco
 1. [IOL Format Notes and POC Plan](iol-format-and-poc-plan.md)
 2. [Problem Types and Natural Interactions](problem-types-and-interactions.md)
 3. [IOL Sample Problems, 2026 revision](../samples-revision2026.en.pdf)
-4. [Selected visual reference](assets/crack-the-language-style-reference.png)
+4. [Selected visual reference](assets/language-codebreaker-style-reference.png)
 
 ## Objective
 
@@ -42,7 +42,7 @@ The POC is a non-commercial educational prototype, not a production game. Its pu
 
 ### Visual direction
 
-Use the [first generated mockup](assets/crack-the-language-style-reference.png) as the primary style reference.
+Use the [first generated mockup](assets/language-codebreaker-style-reference.png) as the primary style reference.
 
 The target is a **warm scholarly case file**:
 
@@ -453,5 +453,5 @@ Do not block scaffolding on these, but record the choice when it becomes necessa
 
 ## Suggested kickoff instruction for the next session
 
-> Read `docs/poc-handoff-plan.md`, `docs/iol-format-and-poc-plan.md`, `docs/problem-types-and-interactions.md`, and `THIRD_PARTY_CONTENT.md`. Inspect `docs/assets/crack-the-language-style-reference.png` and the official IOL sample PDF. Treat the selected mockup as the visual baseline, keep the problem data central, and preserve the public attribution and licensing notices. Validate the evaluator, Unicode character marking, and keyboard access before handing back the result.
+> Read `docs/poc-handoff-plan.md`, `docs/iol-format-and-poc-plan.md`, `docs/problem-types-and-interactions.md`, and `THIRD_PARTY_CONTENT.md`. Inspect `docs/assets/language-codebreaker-style-reference.png` and the official IOL sample PDF. Treat the selected mockup as the visual baseline, keep the problem data central, and preserve the public attribution and licensing notices. Validate the evaluator, Unicode character marking, and keyboard access before handing back the result.
 

@@ -1,6 +1,6 @@
 # Puzzle-content rights ledger
 
-Sources and permissions for third-party puzzles adapted in **Crack the Language** for non-commercial educational use. Permission correspondence is kept privately.
+Sources and permissions for third-party puzzles adapted in **Language Codebreaker** for non-commercial educational use. Permission correspondence is kept privately.
 
 Last updated: 21 October 2026
 

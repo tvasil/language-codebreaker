@@ -1,6 +1,6 @@
-# Crack the Language
+# Language Codebreaker
 
-Crack the Language is a browser-based linguistic puzzle prototype. It explores how restrained, problem-specific interactions can make self-contained linguistics problems more approachable without removing the underlying deduction.
+Language Codebreaker is a browser-based linguistic puzzle prototype. It explores how restrained, problem-specific interactions can make self-contained linguistics problems more approachable without removing the underlying deduction.
 
 **Play the live prototype:** [language-codebreaker.pages.dev](https://language-codebreaker.pages.dev/) · [View the source on GitHub](https://github.com/tvasil/language-codebreaker)
 
@@ -61,4 +61,4 @@ The current clearance work is recorded in the [puzzle-content rights ledger](doc
 - [POC handoff plan](docs/poc-handoff-plan.md)
 - [IOL format notes and POC research](docs/iol-format-and-poc-plan.md)
 - [Problem types and natural interactions](docs/problem-types-and-interactions.md)
-- [Selected visual reference](docs/assets/crack-the-language-style-reference.png)
+- [Selected visual reference](docs/assets/language-codebreaker-style-reference.png)

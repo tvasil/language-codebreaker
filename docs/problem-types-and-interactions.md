@@ -1,6 +1,6 @@
 # Problem Types and Natural Interactions
 
-This is a living catalog for **Crack the Language**. It describes recurring linguistic-puzzle structures, the reasoning they demand, and browser interactions that support that reasoning without turning every problem into the same “evidence board.”
+This is a living catalog for **Language Codebreaker**. It describes recurring linguistic-puzzle structures, the reasoning they demand, and browser interactions that support that reasoning without turning every problem into the same “evidence board.”
 
 Each entry includes a self-contained description of relevant problems from the [2026 IOL sample booklet](../samples-revision2026.en.pdf), so the catalog remains useful without remembering a title or reopening the PDF.
 

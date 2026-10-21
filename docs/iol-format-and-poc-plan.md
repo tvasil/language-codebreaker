@@ -1,6 +1,6 @@
 # IOL Format Notes and POC Plan
 
-This is a living design document for **Crack the Language**. It records what we learn from International Linguistics Olympiad (IOL) problems and turns those observations into an initial proof-of-concept plan.
+This is a living design document for **Language Codebreaker**. It records what we learn from International Linguistics Olympiad (IOL) problems and turns those observations into an initial proof-of-concept plan.
 
 The official abbreviation is **IOL**, rather than ILO. The organisation chose a language-neutral abbreviation.
 
@@ -102,7 +102,7 @@ Tables, diagrams, dot cells, maps, and images are not illustrations added after 
 
 Some questions accept more than one answer when the supplied data supports more than one interpretation. The Persian problem, for example, asks the solver to notice two spatial relations that English can both describe as “under.” The game engine must be able to accept multiple justified answers rather than force every task into exact-string grading.
 
-## Implications for Crack the Language
+## Implications for Language Codebreaker
 
 ### Preserve the problem as the main object
 
@@ -148,7 +148,7 @@ After a solve, the game can replay the decisive observations in order. For Georg
 
 ## Chosen visual direction
 
-The selected visual baseline is the first Georgian Countries mockup: [warm scholarly case-file reference](assets/crack-the-language-style-reference.png).
+The selected visual baseline is the first Georgian Countries mockup: [warm scholarly case-file reference](assets/language-codebreaker-style-reference.png).
 
 The implementation should preserve its strongest qualities:
 

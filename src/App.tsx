@@ -72,7 +72,7 @@ function GameInfoPanel({ onDismiss }: { onDismiss: () => void }) {
       <p className="eyebrow">A linguistic puzzle game</p>
       <h2 id="game-info-title">Discover how languages work, one pattern at a time.</h2>
       <p className="info-panel__lede">
-        <i>Crack the Language</i> is inspired by problems from the International Linguistics Olympiad. They challenge young people to uncover how languages are constructed through logic rather than memorisation, from familiar and lesser-known languages to invented ones.
+        <i>Language Codebreaker</i> is inspired by problems from the International Linguistics Olympiad. They challenge young people to uncover how languages are constructed through logic rather than memorisation, from familiar and lesser-known languages to invented ones.
       </p>
       <p className="info-panel__lede">
         This proof of concept adapts three problems from the IOL’s{" "}
@@ -111,7 +111,7 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
   return (
     <>
       <header className="topbar">
-        <button className="wordmark" type="button" onClick={() => onRoundChange(0)} aria-label="Open case one">Crack the Language</button>
+        <button className="wordmark" type="button" onClick={() => onRoundChange(0)} aria-label="Open case one">Language Codebreaker</button>
         <nav aria-label="Case navigation" className="case-nav">
           {rounds.map((item, index) => (
             <button
@@ -129,6 +129,9 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
         <div className="topbar-actions">
           <button className="about-button" type="button" onClick={onInfoOpen} aria-expanded={infoOpen} aria-controls={infoOpen ? "game-info-panel" : undefined}>About this game</button>
           <span className="prototype-tag">Non-commercial prototype</span>
+          <a className="github-link" href="https://github.com/tvasil/language-codebreaker" target="_blank" rel="noreferrer">
+            View source on GitHub <span aria-hidden="true">↗</span>
+          </a>
         </div>
       </header>
       <main className="page-shell">
@@ -143,8 +146,6 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
         </div>
         <footer className="source-note">
           <strong>Independent educational prototype:</strong> Not affiliated with or endorsed by IOL, OBL, or NACLO. The authors have permitted these free educational adaptations; permission from the relevant competition organisations is pending. These cases are not for commercial reuse.
-          <br />
-          <a href="https://github.com/tvasil/language-codebreaker" target="_blank" rel="noreferrer">View the source on GitHub</a>
         </footer>
       </main>
       {infoOpen && <GameInfoPanel onDismiss={onInfoClose} />}
