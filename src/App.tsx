@@ -142,7 +142,9 @@ function PuzzleShell({ round, onRoundChange, infoOpen, onInfoOpen, onInfoClose, 
           <aside className="paper answer-card" aria-label="Your deduction">{answer}</aside>
         </div>
         <footer className="source-note">
-          <strong>Independent educational prototype:</strong> Not affiliated with or endorsed by IOL, OBL, or NACLO. A puzzle reuse permission request is pending.
+          <strong>Independent educational prototype:</strong> Not affiliated with or endorsed by IOL, OBL, or NACLO. The authors have permitted these free educational adaptations; permission from the relevant competition organisations is pending. These cases are not for commercial reuse.
+          <br />
+          <a href="https://github.com/tvasil/language-codebreaker" target="_blank" rel="noreferrer">View the source on GitHub</a>
         </footer>
       </main>
       {infoOpen && <GameInfoPanel onDismiss={onInfoClose} />}
@@ -259,7 +261,7 @@ function useGeorgianRound({ onNext }: { onNext: () => void }) {
         ]} shown={hintsShown} onReveal={() => setHintsShown((count) => Math.min(count + 1, 4))} idPrefix="georgian" />
         <ScratchSpace id="georgian-scratch" value={scratch} onChange={setScratch} textareaRef={scratchRef} detailsRef={scratchDetailsRef} />
         <p className="attribution">
-          Adapted from <cite>Georgian Countries</cite> by Bruno L’Astorina, Brazilian Linguistics Olympiad 2016; republished in IOL Sample Problems. © respective rights holders. Non-commercial educational prototype; permission request pending.{" "}
+          Adapted from <cite>Georgian Countries</cite> by Bruno L’Astorina, Brazilian Linguistics Olympiad 2016; republished in IOL Sample Problems. © respective rights holders. Author permission received; OBL permission pending. Free non-commercial educational adaptation.{" "}
           <a href="https://ioling.org/booklets/samples.en.pdf">Official source</a>.
         </p>
       </>
@@ -404,7 +406,7 @@ function useGreekRound({ onNext }: { onNext: () => void }) {
         ]} shown={hintsShown} onReveal={() => setHintsShown((count) => Math.min(count + 1, 5))} idPrefix="greek" />
         <ScratchSpace id="greek-scratch" value={scratch} onChange={setScratch} />
         <p className="attribution">
-          Adapted from <cite>A Donkey in Every House</cite> by Todor Tchervenkov, NACLO 2007; republished in IOL Sample Problems. © respective rights holders. Non-commercial educational prototype; permission request pending.{" "}
+          Adapted from <cite>A Donkey in Every House</cite> by Todor Tchervenkov, NACLO 2007; republished in IOL Sample Problems. © respective rights holders. Author permission received; NACLO permission pending. Free non-commercial educational adaptation.{" "}
           <a href="https://naclo.org/resources/problems/2007/N2007-C.pdf">Official source</a>.
         </p>
       </>
@@ -605,7 +607,7 @@ function useBrailleRound({ onNext }: { onNext: () => void }) {
         )}
         <ScratchSpace id="tenji-scratch" value={scratch} onChange={setScratch} />
         <p className="attribution">
-          Adapted from <cite>Tenji Karaoke</cite> by Patrick Littell, NACLO 2009; republished in IOL Sample Problems. © NACLO and the problem author. Non-commercial educational prototype; permission request pending.{" "}
+          Adapted from <cite>Tenji Karaoke</cite> by Patrick Littell, NACLO 2009; republished in IOL Sample Problems. © NACLO and the problem author. Author permission received; NACLO permission pending. Free non-commercial educational adaptation.{" "}
           <a href="https://naclo.org/resources/problems/2009/N2009-A.pdf">Official source</a>.
         </p>
       </>

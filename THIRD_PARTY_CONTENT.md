@@ -2,7 +2,7 @@
 
 The MIT License in this repository applies to the original application code and original project documentation. It does **not** apply to the adapted puzzle statements, datasets, answer material, or puzzle-specific explanations identified below, including when that material appears inside an otherwise MIT-licensed source or documentation file.
 
-Those materials remain copyrighted by their respective authors and organisations. No licence to copy, redistribute, adapt, or commercially use the puzzle content is granted by this repository. The material is included in an independent, non-commercial educational prototype with attribution while reuse permission is being requested.
+Those materials remain copyrighted by their respective authors and organisations and are excluded from the repository's MIT licence. The authors of the three included cases have given permission for their adaptations to appear in this free, non-commercial educational prototype. Permission from the relevant competition organisations is still pending. No commercial-use rights or independent reuse licence is granted by this repository; permission correspondence is kept privately.
 
 This project is not affiliated with or endorsed by the International Linguistics Olympiad (IOL), the Brazilian Linguistics Olympiad (OBL), or the North American Computational Linguistics Open Competition (NACLO).
 
@@ -26,7 +26,7 @@ The exclusion follows the third-party material, not merely these paths. Original
 - Republished in: IOL Sample Problems, Problem 1
 - Official source: <https://ioling.org/booklets/samples.en.pdf>
 - Material used: Georgian/English country-name dataset, task structure, answers, and an interactive explanation derived from the puzzle
-- Permission status: request pending
+- Permission status: author permission received by email 20 October 2026; IOL approval received; OBL permission pending
 
 ### A Donkey in Every House
 
@@ -36,7 +36,7 @@ The exclusion follows the third-party material, not merely these paths. Original
 - Official problem: <https://naclo.org/resources/problems/2007/N2007-C.pdf>
 - Official solution: <https://naclo.org/resources/problems/2007/N2007-CS.pdf>
 - Material used: Ancient Greek/English dataset, task structure, answers, hints, and an interactive explanation derived from the puzzle
-- Permission status: request pending
+- Permission status: author permission received 17 October 2026; IOL approval received; NACLO permission pending
 
 ### Tenji Karaoke
 
@@ -46,7 +46,7 @@ The exclusion follows the third-party material, not merely these paths. Original
 - Official problem: <https://naclo.org/resources/problems/2009/N2009-A.pdf>
 - Official source archive: <https://naclo.org/practice.php>
 - Material used: word list, tenji patterns, task structure, answers, hints, and an interactive explanation derived from the puzzle
-- Permission status: request pending
+- Permission status: author permission received 20 October 2026; IOL approval received; NACLO permission pending
 
 ## Rights enquiries
 

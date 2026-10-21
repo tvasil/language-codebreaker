@@ -2,17 +2,19 @@
 
 Crack the Language is a browser-based linguistic puzzle prototype. It explores how restrained, problem-specific interactions can make self-contained linguistics problems more approachable without removing the underlying deduction.
 
+**Play the live prototype:** [language-codebreaker.pages.dev](https://language-codebreaker.pages.dev/) · [View the source on GitHub](https://github.com/tvasil/language-codebreaker)
+
 This is an independent, non-commercial educational project. It is not affiliated with or endorsed by the International Linguistics Olympiad (IOL), the Brazilian Linguistics Olympiad (OBL), or the North American Computational Linguistics Open Competition (NACLO). The prototype has no advertising, paywall, sponsorship, or behavioural tracking.
 
 ## The three cases
 
 | Case | Original problem | Author and origin | Official sources | Permission status |
 |---|---|---|---|---|
-| Georgian Countries | *Georgian Countries* | Bruno L’Astorina, Brazilian Linguistics Olympiad 2016 | [IOL sample problem](https://ioling.org/booklets/samples.en.pdf) | Request pending |
-| Ancient Greek | *A Donkey in Every House* | Todor Tchervenkov, NACLO 2007 | [Problem](https://naclo.org/resources/problems/2007/N2007-C.pdf) · [Solution](https://naclo.org/resources/problems/2007/N2007-CS.pdf) | Request pending |
-| Japanese Braille | *Tenji Karaoke* | Patrick Littell, NACLO 2009 | [Problem](https://naclo.org/resources/problems/2009/N2009-A.pdf) · [NACLO archive](https://naclo.org/practice.php) | Request pending |
+| Georgian Countries | *Georgian Countries* | Bruno L’Astorina, Brazilian Linguistics Olympiad 2016 | [IOL sample problem](https://ioling.org/booklets/samples.en.pdf) | Author permission received; OBL permission pending |
+| Ancient Greek | *A Donkey in Every House* | Todor Tchervenkov, NACLO 2007 | [Problem](https://naclo.org/resources/problems/2007/N2007-C.pdf) · [Solution](https://naclo.org/resources/problems/2007/N2007-CS.pdf) | Author permission received; NACLO permission pending |
+| Japanese Braille | *Tenji Karaoke* | Patrick Littell, NACLO 2009 | [Problem](https://naclo.org/resources/problems/2009/N2009-A.pdf) · [NACLO archive](https://naclo.org/practice.php) | Author permission received; NACLO permission pending |
 
-Each case includes visible attribution and a direct link to an official source. The adaptations add browser interactions, progressive hints, answer checking, and short explanatory reveals.
+Each case includes visible attribution and a direct link to an official source. The adaptations add browser interactions, progressive hints, answer checking, and short explanatory reveals. These author-created cases are offered for free educational use; author permission does not grant commercial rights or permission to reuse the content independently. Permission from the relevant competition organisations is still pending.
 
 ## Run locally
 
